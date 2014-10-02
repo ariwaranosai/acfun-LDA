@@ -85,7 +85,6 @@ def word_list(path = conf.output_dir + "/tmp/"):
     print "cutting words"
     dict = {}
     f = open(path+"/all_json.txt", "r")
-    new_f = codecs.open(path + "/new_json.txt", "w")
     i = 0
     for line in f:
         if (i %100) == 0:
@@ -93,23 +92,18 @@ def word_list(path = conf.output_dir + "/tmp/"):
         i += 1
         json_obj = json.loads(line)
         danmu = json_obj['ci']
-        json_obj['ci'] = {}
         for k in danmu.keys():
             words_list = danmu[k]
             word = jieba.cut(words_list)
-            word = list(word)
-            json_obj['ci'][k] = word
-            for w in word:
+            for w in list(word):
                 if w in dict.keys():
                     dict[w] += 1
                 else:
                     dict[w] = 1
-        new_f.write(json.dumps(json_obj)
 
     f.close()
-    new_f.close()
 
-    out = codecs.open(path + "/words.txt", "wb", "utf-8")
+    out = codecs.open(path + "words.txt", "wb", "utf-8")
     for k in dict.keys():
         out.write(k)
         out.write(" ")
@@ -117,6 +111,10 @@ def word_list(path = conf.output_dir + "/tmp/"):
         out.write("\n")
 
     out.close()
+
+
+def word2id():
+    dict = word_dict_load(conf.output_dir + "/tmp/words.txt")
 
 
 

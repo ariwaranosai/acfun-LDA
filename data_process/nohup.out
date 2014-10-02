@@ -1,0 +1,27 @@
+Building Trie..., from /usr/lib/python2.7/site-packages/jieba/dict.txt
+loading model from cache /tmp/jieba.cache
+loading model cost 0.982326984406 seconds.
+Trie has been built succesfully.
+merging file
+/home/hengshi/DataSet/tmp//tmp
+cutting words
+Traceback (most recent call last):
+  File "main.py", line 134, in <module>
+    main()
+  File "main.py", line 119, in main
+    word_list(path)
+  File "main.py", line 87, in word_list
+    f = open(path+"all_json.txt", "r")
+IOError: [Errno 2] No such file or directory: '/home/hengshi/DataSet/tmp//tmpall_json.txt'
+Building Trie..., from /usr/lib/python2.7/site-packages/jieba/dict.txt
+loading model from cache /tmp/jieba.cache
+loading model cost 0.97765994072 seconds.
+Trie has been built succesfully.
+0
+100
+200
+300
+400
+merging file
+/home/hengshi/DataSet/tmp//tmp
+cutting words
