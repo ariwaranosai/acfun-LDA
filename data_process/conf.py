@@ -1,8 +1,8 @@
 #coding=utf-8
 __author__ = 'nkssai'
 
-env = "dev"
-#env = "static"
+#env = "dev"
+env = "static"
 
 if env == "dev":
     input_dir = "/Users/shihang/code/acData/data/"

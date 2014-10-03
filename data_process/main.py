@@ -118,7 +118,6 @@ def word_list(path = conf.output_dir + "/tmp/"):
     out.close()
 
 
-
 def main():
     path = dir2onefile()
     word_list(path)
