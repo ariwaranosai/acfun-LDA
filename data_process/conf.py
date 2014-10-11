@@ -2,5 +2,5 @@
 __author__ = 'nkssai'
 
 
-input_dir = "/home/nkssai/tmp"
-output_dir = "/home/nkssai/tmp/output"
+input_dir = "/Users/shihang/code/acData/data/"
+output_dir = "/Users/shihang/code/tmp/"
