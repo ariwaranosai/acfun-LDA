@@ -104,8 +104,7 @@ def word_list(path = conf.output_dir + "/tmp/"):
                     dict[w] += 1
                 else:
                     dict[w] = 1
-        new_f.write(json.dumps(json_obj)
-
+        new_f.write(json.dumps(json_obj) + u"\n")
     f.close()
     new_f.close()
 
