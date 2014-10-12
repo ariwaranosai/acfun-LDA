@@ -1,13 +1,16 @@
 from acfunData import dataResolve as dr
+import codecs
 import conf
-import os
+import os,sys
 import json
 import logging
+import jieba
 
 __author__ = 'nkssai'
 
 
-def main():
+def dir2onefile():
+    print "merging file"
     logging.debug("start")
     all_video = os.listdir(conf.input_dir)
     if len(all_video) == 0:
@@ -56,6 +59,7 @@ def main():
             logging.debug("dir " + name + " has no json")
 
     json_f.close()
+    return tmp_dir
 
 def json_resolve(path, name, id):
     #print (id + " " + name + " " + path)
@@ -74,7 +78,45 @@ def make_tmp_dir():
         os.mkdir(tmp_dir)
     return tmp_dir
 
+
+def word_list(path = conf.output_dir + "/tmp/"):
+    jieba.initialize()
+    print "cutting words"
+    dict = {}
+    f = open(path+"all_json.txt", "r")
+    for line in f:
+        json_obj = json.loads(line)
+        danmu = json_obj['ci']
+        for k in danmu.keys():
+            words_list = danmu[k]
+            word = jieba.cut(words_list)
+            for w in list(word):
+                if w in dict.keys():
+                    dict[w] += 1
+                else:
+                    dict[w] = 1
+
+    f.close()
+
+    out = codecs.open(path + "words.txt", "wb", "utf-8")
+    for k in dict.keys():
+        out.write(k)
+        out.write(" ")
+        out.write(unicode(dict[k]))
+        out.write("\n")
+
+    out.close()
+
+
+
+def main():
+    path = dir2onefile()
+    word_list(path)
+
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print "Error"
+        sys.exit(0)
     logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
@@ -82,5 +124,12 @@ if __name__ == "__main__":
                     filemode = "w",
                     )
 
-    main()
 
+    if sys.argv[1] == '0':
+        main()
+    elif sys.argv[1] == '1':
+        dir2onefile()
+    elif sys.argv[1] == '2':
+        word_list()
+    else:
+        print "Error"

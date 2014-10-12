@@ -1,6 +1,7 @@
 #coding=utf-8
 import json
 import re
+import jieba
 __author__ = 'nkssai'
 
 
@@ -33,5 +34,3 @@ def json_tranform(str, id, name, split_time = 60, radio = 200):
     ret['sum'] = sum / len(ret['ci'].keys())
 
     return ret
-
-
