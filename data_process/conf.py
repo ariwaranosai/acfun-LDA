@@ -4,3 +4,5 @@ __author__ = 'nkssai'
 
 input_dir = "/Users/shihang/code/acData/data/"
 output_dir = "/Users/shihang/code/tmp/"
+
+file_radio = 0

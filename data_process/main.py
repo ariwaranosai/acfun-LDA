@@ -49,22 +49,22 @@ def main():
                 ret = json_resolve(json_path + f, name, id)
                 if ret != None:
                     json_f.write(ret + "\n")
-                    print ret
 
                 break
 
         if ret == None:
             logging.debug("dir " + name + " has no json")
 
-        json_f.close()
+    json_f.close()
 
 def json_resolve(path, name, id):
-    print (id + " " + name + " " + path)
+    #print (id + " " + name + " " + path)
     s = open(path).readline()
     ret = dr.json_tranform(s, id, name)
-    if ret != None:
+    if ret['sum'] > conf.file_radio:
         return json.dumps(ret)
     else:
+        logging.debug(id + " " + name + " is too small")
         return None
 
 

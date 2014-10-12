@@ -27,8 +27,6 @@ def json_tranform(str, id, name, split_time = 60, radio = 200):
             continue
 
     ret['sum'] = sum / len(ret['ci'].keys())
-    if ret['sum'] < 200:
-        return None
 
     return ret
 
