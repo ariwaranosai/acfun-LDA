@@ -133,14 +133,17 @@ def word2id(path = conf.output_dir + "/tmp/dict.txt"):
     out = open(conf.output_dir + "/tmp/id_json.txt", "w")
     with open(conf.output_dir + "/tmp/new_json.txt", "r") as new_json_f:
         for line in new_json_f:
+            flag = False
             json_obj = json.loads(line.strip("\n"))
             for k in json_obj['ci'].keys():
                 l = json_obj['ci'][k]
                 json_obj['ci'][k] = []
                 for w in l:
                     if w in dict.keys():
+                        flag = True
                         json_obj['ci'][k].append(dict[w])
-            out.write(json.dumps(json_obj) + "\n")
+            if flag:
+                out.write(json.dumps(json_obj) + "\n")
 
     out.close()
 
