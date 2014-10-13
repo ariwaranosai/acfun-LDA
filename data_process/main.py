@@ -118,6 +118,38 @@ def word_list(path = conf.output_dir + "/tmp/"):
     out.close()
 
 
+def word2id(path = conf.output_dir + "/tmp/dict.txt"):
+    #load dict
+    dict = {}
+    print "load dict"
+    with codecs.open(path, "r", "utf-8") as dict_f:
+        i = 0
+        for line in dict_f:
+            word = line.split(" ")[0]
+            dict[unicode(word)] = i
+            i += 1
+
+    print "word 2 id"
+    out = open(conf.output_dir + "/tmp/id_json.txt", "w")
+    with open(conf.output_dir + "/tmp/new_json.txt", "r") as new_json_f:
+        for line in new_json_f:
+            json_obj = json.loads(line.strip("\n"))
+            for k in json_obj['ci'].keys():
+                l = json_obj['ci'][k]
+                json_obj['ci'][k] = []
+                for w in l:
+                    if w in dict.keys():
+                        json_obj['ci'][k].append(dict[w])
+            out.write(json.dumps(json_obj) + "\n")
+
+    out.close()
+
+
+
+
+
+
+
 def main():
     path = dir2onefile()
     word_list(path)
@@ -140,5 +172,7 @@ if __name__ == "__main__":
         dir2onefile()
     elif sys.argv[1] == '2':
         word_list()
+    elif sys.argv[1] == '3':
+        word2id()
     else:
         print "Error"
