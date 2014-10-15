@@ -136,12 +136,18 @@ def word2id(path = conf.output_dir + "/tmp/dict.txt"):
             flag = False
             json_obj = json.loads(line.strip("\n"))
             for k in json_obj['ci'].keys():
+                tmp_dic_words = {}
                 l = json_obj['ci'][k]
                 json_obj['ci'][k] = []
                 for w in l:
-                    if w in dict.keys():
-                        flag = True
-                        json_obj['ci'][k].append(dict[w])
+                    if w in dict.keys(): #no more than 300
+                        if w in tmp_dic_words.keys():
+                            tmp_dic_words[w] += 1
+                        else:
+                            tmp_dic_words[w] = 1
+                        if tmp_dic_words[w] < 400:
+                            flag = True
+                            json_obj['ci'][k].append(dict[w])
             if flag:
                 out.write(json.dumps(json_obj) + "\n")
 

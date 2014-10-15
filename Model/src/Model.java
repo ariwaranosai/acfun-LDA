@@ -11,6 +11,7 @@ import java.util.Map;
 import java.lang.*;
 import java.lang.reflect.Array;
 
+import common.ComUtil;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.util.JSONUtils;
@@ -42,6 +43,9 @@ public class Model {
     public float[] phiB;  // background word distribution, 1*V
     public float[][] vPhi;  // topic-word distribution, T * V
 
+    public int Sy[][][][]; //存储采样y
+    public int Sz[][][]; //存储采样Z
+
 
     // 采样参数
     public boolean y[][][]; //每一个词的生成指示
@@ -62,7 +66,7 @@ public class Model {
     public Model(int topicNum, float alphaP, double betaP, double betaBP, float gammaP) {
         this.T = topicNum;
         this.alpha = alphaP;
-        this.beta = betaB;
+        this.beta = betaP;
         this.betaB = betaBP;
         this.gamma = gammaP;
     }
@@ -72,13 +76,11 @@ public class Model {
      * @param iteration
      * @param docs
      * @param saveStep 保持步长
-     * @param saveTime 保存次数
-     * @param buildIn build-in过程
-     * @param outDir
+     * @param buildin
      */
     public void inference(int iteration, ArrayList<ArrayList<List<Integer>>> docs, int saveStep,
-                          int saveTime, int buildIn, String outDir) {
-        if(iteration < saveStep * saveTime) {
+                          int buildin) {
+        if(iteration <buildin) {
             System.err.println("迭代次数过少");
             System.exit(0);
         }
@@ -96,20 +98,162 @@ public class Model {
                 }
             }
 
-            if (i >= (iteration - 1 - (saveStep * (saveTime - 1))))
-                if ((iteration - i - 1) % saveStep == 0) {
+            //确保
+
+            if (i >= buildin) {
+                if (i % saveStep == 0) {
                     System.out.println("Saveing the model at " + (i + 1)
                             + "-th iteration");
                     try {
-                        saveModelRes(outDir + "/model-" + (i + 1));
+                        saveModelRes(docs);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    no++;
                 }
+            }
         }
 
+        getRealRes(docs);
+
     }
+
+    //计算最后参数
+    private void getRealRes(ArrayList<ArrayList<List<Integer>>> docs) {
+
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < docs.get(i).size(); j++) {
+                Z[i][j] = arrayMax(Sz[i][j]);
+            }
+        }
+
+        for (int i = 0; i< V; i++) {
+            for (int j = 0; j < docs.get(i).size(); j++) {
+                for (int k = 0; k < docs.get(i).get(j).size(); k ++) {
+                    int t = arrayMax(Sy[i][j][k]);
+                    if (t == 1)
+                        y[i][j][k] = true;
+                    else
+                        y[i][j][k] = false;
+                }
+            }
+        }
+
+        //重新计算其他统计量
+        cleanTempParam(docs);
+        computeTempParam(docs, Z, y);
+    }
+
+    public void saveModel(String path) throws Exception
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(new File(
+                path + "/model.phiB")));
+
+        for(int i = 0; i < this.phiB.length; i++){
+            writer.write(phiB[i]+ "\n");
+        }
+
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter(new File(path
+                + "/model.phi")));
+        for (int i = 0; i < this.phi.length; i++) {
+            writer.write(phi[i] + "\n");
+        }
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter(new File(path
+                + "/model.theta")));
+        for (int i = 0; i < this.theta.length; i++) {
+            for (int j = 0; j < this.theta[i].length; j++) {
+                writer.write(theta[i][j] + " ");
+            }
+            writer.write("\n");
+        }
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter(new File(path
+                + "/model.vPhi")));
+        for (int i = 0; i < vPhi.length; i++) {
+            for (int j = 0; j < this.vPhi[i].length; j++) {
+                writer.write(this.vPhi[i][j] + " ");
+            }
+            writer.write("\n");
+        }
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter(new File(path
+                + "/model-screen-topic.txt")));
+        for (int i = 0; i < this.Z.length; i++){
+            for (int j = 0; j < this.Z[i].length; j++) {
+                writer.write(this.Z[i][j] + " ");
+            }
+            writer.write("\n");
+        }
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter(new File(path
+                + "/model-word-y.txt")));
+        for(int i = 0; i < this.y.length; i ++) {
+            for (int j = 0; j < this.y[i].length; j++)
+                writer.write(this.y[i][j].toString() + " ");
+            writer.write("\n");
+        }
+        writer.close();
+    }
+
+    public int arrayMax(int a[])
+    {
+        int max = -1;
+        int num = 0;
+        for (int i = 0; i < a.length; i++)
+            if (a[i] > max)
+            {
+                max = a[i];
+                num = i;
+            }
+
+        return num;
+    }
+
+    private void saveModelRes(ArrayList<ArrayList<List<Integer>>> docs) {
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < docs.get(i).size(); j++) {
+                    Sz[i][j][Z[i][j]] ++;
+            }
+        }
+
+        for (int i = 0; i< V; i++) {
+            for (int j = 0; j < docs.get(i).size(); j++) {
+                for (int k = 0; k < docs.get(i).get(j).size(); k ++) {
+                    if (y[i][j][k])
+                        Sy[i][j][k][1]++;
+                    else
+                        Sy[i][j][k][0]++;
+                }
+            }
+        }
+    }
+
+    public void computeModelParameter() {
+        System.out.println("computing model parameters...");
+        for (int w = 0; w < W; w++) {
+            phiB[w] = (float) ((NW[w] + betaB) / (NY[0] + W * betaB));
+        }
+        for (int t = 0; t < T; t++) {
+            for (int w = 0; w < W; w++)
+                vPhi[t][w] = (float) ((NTW[t][w] + beta) / (SNTW[t] + W * beta));
+        }
+        for (int i = 0; i < 2; i++) {
+            phi[i] = (float) ((NY[i] + gamma) / (NY[0] + NY[1] + 2 * gamma));
+        }
+        for (int u = 0; u < V; u++) {
+            for (int t = 0; t < T; t++) {
+                theta[u][t] = (float) ((NUT[u][t] + alpha) / (SNUT[u] + T * alpha));
+            }
+        }
+        System.out.println("model parameters are computed");
+    }
+
 
     private void SampleLabel(Integer word, int videoIndex, int n, int l) {
         if (y[videoIndex][n][l]) {
@@ -125,12 +269,12 @@ public class Model {
 
         //计算 y = 1 y = 0
         double p0 = (double) (NY[0] + gamma) / (NY[0] + NY[1] + 2 * gamma);
-        double p2 = p2 = (double) (NW[word] + betaB) / (NY[0] + V * betaB);
+        double p2 = (double) (NW[word] + betaB) / (NY[0] + W * betaB);
 
         double p3 = 1.0d;
         double sumRow = SNTW[Z[videoIndex][n]];
 
-        p3 = (double) (NTW[Z[videoIndex][n]][word] + beta) / (sumRow + V * beta);
+        p3 = (double) (NTW[Z[videoIndex][n]][word] + beta) / (sumRow + W * beta);
 
         pt[0] = p0 * p2;
         pt[1] = pt[0] + (1 - p0) * p3;
@@ -196,7 +340,7 @@ public class Model {
                 double sumRow = SNTW[i];
 
                 for (int numC = 0; numC < tempCounts.get(w); numC++) {
-                    p2 = p2 * ((double) (temvalue + beta + numC) / ((double) sumRow + V * beta + wcount));
+                    p2 = p2 * ((double) (temvalue + beta + numC) / ((double) sumRow + W * beta + wcount));
                     wcount++;
                 }
             }
@@ -205,21 +349,41 @@ public class Model {
 
         // 计算多项分布的参数
         double rand = Math.random();
+
         double rouletter = (double) (rand * pt[T - 1]);
         int sample = 0;
-        for (sample = 0; sample < T; sample++) {
-            if (pt[sample] > rouletter)
-                break;
-        }
-        if (sample > T - 1) {
+        sample = getMulti(pt);
+      //  for (sample = 0; sample < T; sample++) {
+      //      if (pt[sample] > rouletter)
+       //         break;
+        //}
+        if (sample == - 1) {
+
             for (int i = 1; i < T; i++) {
                 System.err.print(pt[i] + "\t");
             }
+
+            for(int i = 0; i< T; i++) {
+                int wcount = 0;
+                double p1 = (double) (NUT[videoIndex][i] + alpha) / (NUTsumRowU + T * alpha);
+                double p2 = 1.0D;
+                for (int w = 0; w < tempWords.size(); w++) {
+                    int temvalue = NTW[i][tempWords.get(w)];
+                    double sumRow = SNTW[i];
+
+                    for (int numC = 0; numC < tempCounts.get(w); numC++) {
+                        p2 = p2 * ((double) (temvalue + beta + numC) / ((double) sumRow + W * beta + wcount));
+                        wcount++;
+                    }
+                }
+                pt[i] = p1 * p2;
+            }
+
             System.err.println(" rand: \t" + rouletter);
             sample = (int) Math.round(Math.random() * (T - 1));
         }
 
-        Z[videoIndex][topic] = sample;
+        Z[videoIndex][screenShot] = sample;
 
         //更新其他统计量
         topic = sample;
@@ -235,11 +399,35 @@ public class Model {
         tempWords.clear();
     }
 
+    private int getMulti(double[] pt) {
+        double[] pt_t = new double[pt.length];
+        double sum = 0;
+        for (int i = 0; i < pt.length; i++) {
+            pt_t[i] = pt[i];
+            sum += pt_t[i];
+        }
+
+        for (int i = 0; i< pt.length; i++) {
+            pt_t[i] = pt_t[i] / sum;
+        }
+
+        double  rand = Math.random();
+
+        int index = 0;
+        for (index = 0; index < pt.length; index++) {
+            rand = rand - pt_t[index];
+            if (rand <= 0D) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
     private void uniqe(List<Integer> words, boolean[] y, ArrayList<Integer> tempWords, ArrayList<Integer> tempCounts) {
 
         for (int i = 0; i < words.size(); i++) {
             if(y[i]) {
-                if (tempWords.contains(i)) {
+                if (tempWords.contains(words.get(i))) {
                     int index = tempWords.indexOf(words.get(i));
                     tempCounts.set(index, tempCounts.get(index) + 1);
                 } else {
@@ -263,10 +451,16 @@ public class Model {
 
         //初始化主题
         Z = new int[V][];
+        Sz = new int[V][][];
         for (int i = 0; i < V; i++) {
             Z[i] = new int[docs.get(i).size()];
+            Sz[i] = new int[docs.get(i).size()][];
+
             for (int j = 0; j < docs.get(i).size(); j++) {
                 Z[i][j] = (int) Math.floor(Math.random() * T);
+                Sz[i][j] = new int[T];
+                for (int k = 0; k < T; k++)
+                    Sz[i][j][k] = 0;
                 if (Z[i][j] < 0)
                     Z[i][j] = 0;
                 if (Z[i][j] > T - 1)
@@ -275,11 +469,17 @@ public class Model {
         }
 
         y = new boolean[V][][];
+        Sy = new int[V][][][];
         for (int i = 0; i< V; i++) {
             y[i] = new boolean[docs.get(i).size()][];
+            Sy[i] = new int[docs.get(i).size()][][];
             for (int j = 0; j < docs.get(i).size(); j++) {
                 y[i][j] = new boolean[docs.get(i).get(j).size()];
+                Sy[i][j] = new int[docs.get(i).get(j).size()][];
                 for (int k = 0; k < docs.get(i).get(j).size(); k ++) {
+                    Sy[i][j][k] = new int[2];
+                    Sy[i][j][k][0] = 0;
+                    Sy[i][j][k][1] = 0;
                     if (Math.random() > 0.5)
                         y[i][j][k] = true;
                     else
@@ -332,14 +532,17 @@ public class Model {
 
     }
 
+
     /**
      * init parameters in compute
      * @param docs
      */
     private void cleanTempParam(ArrayList<ArrayList<List<Integer>>> docs) {
         NW = new int[W];
+        phiB = new float[W];
         for (int i = 0; i < W; i++) {
             NW[i] = 0;
+            phiB[i] = 0.0f;
         }
         NTW = new int[T][];
         vPhi = new float[T][];
@@ -410,12 +613,15 @@ public class Model {
         return doc;
     }
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) throws Exception {
         String path = "/Users/shihang/code/tmp/tmp/id_json.txt";
-        int wordSize = 1867;
+        int wordSize = 49;
         Model m = new Model(4, 10, 0.01, 0.01, 20);
         ArrayList<ArrayList<List<Integer>>> doc = m.loadData(path);
         m.init(doc, wordSize);
+        m.inference(30, doc, 3, 8);
+        m.computeModelParameter();
+        m.saveModel("/Users/shihang/code/tmp/tmp/");
     }
 
 }
