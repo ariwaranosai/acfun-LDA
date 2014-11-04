@@ -17,7 +17,6 @@ import net.sf.json.JSONObject;
 import net.sf.json.util.JSONUtils;
 
 import common.MatrixUtil;
-import sun.jvm.hotspot.jdi.ArrayReferenceImpl;
 
 public class Model {
     /**
@@ -314,6 +313,14 @@ public class Model {
         ArrayList<Integer> tempCounts = new ArrayList<Integer>();
         uniqe(commit, y[videoIndex][screenShot], tempWords, tempCounts);
 
+        if (NUT[videoIndex][topic] == 0) {
+            System.err.println("NUT " + NUT[videoIndex][topic]);
+        }
+        for (int w1 = 0; w1 < tempWords.size(); w1++) {
+            if (NTW[topic][tempWords.get(w1)] < tempCounts.get(w1)) {
+                System.err.println("NTW !! error!");
+            }
+        }
         //更新 NTW每个主题的单词分布 NTU每个视频的主题
         if(NUT[videoIndex][topic] == 0) {
             System.err.println("error: NUT " + NUT[videoIndex][topic]);
@@ -332,6 +339,7 @@ public class Model {
         double NUTsumRowU = SNUT[videoIndex];
 
         for(int i = 0; i< T; i++) {
+            int nouse;
             int wcount = 0;
             double p1 = (double) (NUT[videoIndex][i] + alpha) / (NUTsumRowU + T * alpha);
             double p2 = 1.0D;
@@ -340,7 +348,11 @@ public class Model {
                 double sumRow = SNTW[i];
 
                 for (int numC = 0; numC < tempCounts.get(w); numC++) {
-                    p2 = p2 * ((double) (temvalue + beta + numC) / ((double) sumRow + W * beta + wcount));
+                    double tmp_p2 = ((double) (temvalue + beta + numC) / ((double) sumRow + W * beta + wcount));
+                    double old_p2 = p2;
+                    p2 = old_p2 * tmp_p2;
+                    if(p2 == 0)
+                        nouse = 0;
                     wcount++;
                 }
             }
@@ -358,27 +370,7 @@ public class Model {
        //         break;
         //}
         if (sample == - 1) {
-
-            for (int i = 1; i < T; i++) {
-                System.err.print(pt[i] + "\t");
-            }
-
-            for(int i = 0; i< T; i++) {
-                int wcount = 0;
-                double p1 = (double) (NUT[videoIndex][i] + alpha) / (NUTsumRowU + T * alpha);
-                double p2 = 1.0D;
-                for (int w = 0; w < tempWords.size(); w++) {
-                    int temvalue = NTW[i][tempWords.get(w)];
-                    double sumRow = SNTW[i];
-
-                    for (int numC = 0; numC < tempCounts.get(w); numC++) {
-                        p2 = p2 * ((double) (temvalue + beta + numC) / ((double) sumRow + W * beta + wcount));
-                        wcount++;
-                    }
-                }
-                pt[i] = p1 * p2;
-            }
-
+            System.err.println("fuck zero");
             System.err.println(" rand: \t" + rouletter);
             sample = (int) Math.round(Math.random() * (T - 1));
         }
@@ -614,14 +606,13 @@ public class Model {
     }
 
     public static void main(String args[]) throws Exception {
-        String path = "/Users/shihang/code/tmp/tmp/id_json.txt";
-        int wordSize = 49;
-        Model m = new Model(4, 10, 0.01, 0.01, 20);
+        String path = "E:\\Users\\hengshi\\Documents\\new.txt";
+        int wordSize = 977;
+        Model m = new Model(40, 1.5f, 0.01, 0.1, 10);
         ArrayList<ArrayList<List<Integer>>> doc = m.loadData(path);
         m.init(doc, wordSize);
-        m.inference(30, doc, 3, 8);
+        m.inference(300, doc, 5, 40);
         m.computeModelParameter();
-        m.saveModel("/Users/shihang/code/tmp/tmp/");
+        m.saveModel("E:\\Users\\hengshi\\Documents\\");
     }
-
 }
