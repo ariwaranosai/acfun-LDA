@@ -606,13 +606,13 @@ public class Model {
     }
 
     public static void main(String args[]) throws Exception {
-        String path = "E:\\Users\\hengshi\\Documents\\new.txt";
+        String path = "new.txt";
         int wordSize = 977;
         Model m = new Model(40, 1.5f, 0.01, 0.1, 10);
         ArrayList<ArrayList<List<Integer>>> doc = m.loadData(path);
         m.init(doc, wordSize);
         m.inference(300, doc, 5, 40);
         m.computeModelParameter();
-        m.saveModel("E:\\Users\\hengshi\\Documents\\");
+        m.saveModel(".");
     }
 }
