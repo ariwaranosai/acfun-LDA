@@ -1,4 +1,4 @@
 acfun-LDA
 =========
 
-twitter-LDA used in data from acfun
+Acfun-LDA based on twitter-lda used in data from acfun
